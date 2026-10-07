@@ -26,8 +26,10 @@ def get_orders( skip: int = Query(0, ge=0), limit: int = Query(10, ge=1, le=100)
 def change_order_status( order_id: int, data: OrderStatusUpdate,
                          background_tasks: BackgroundTasks, current_user: User = Depends(get_admin_user),
                          db: Session = Depends(get_db) ):
-    order = update_order_status(order_id, data.status, db)
+    order, status_changed = update_order_status(order_id, data.status, db)
 
-    background_tasks.add_task( send_order_status_email, order.customer.email, order.order_number, order.status )
+    if status_changed:
+      background_tasks.add_task( send_order_status_email,order.customer.email,
+                                 order.order_number,order.status)
 
     return order

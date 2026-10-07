@@ -100,17 +100,20 @@ def get_all_orders( db: Session, skip: int = 0, limit: int = 10 ):
     return db.query(Order).order_by( Order.created_at.desc() ).offset(skip).limit(limit).all()
 
 
-def update_order_status( order_id: int,new_status: str, db: Session ):
- 
-    order = db.query(Order).filter( Order.id == order_id ).first()
+def update_order_status(order_id: int, new_status: str, db: Session):
+
+    order = db.query(Order).filter(Order.id == order_id).first()
 
     if order is None:
         raise HTTPException( status_code=status.HTTP_404_NOT_FOUND, detail='Order not found' )
 
-    valid_statuses = [ 'Pending', 'Confirmed','Shipped', 'Delivered', 'Cancelled' ]
+    valid_statuses = [ 'Pending', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled' ]
 
     if new_status not in valid_statuses:
         raise HTTPException( status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid order status' )
+
+    if order.status == new_status:
+        return order, False
 
     order.status = new_status
 
@@ -121,4 +124,4 @@ def update_order_status( order_id: int,new_status: str, db: Session ):
 
     db.refresh(order)
 
-    return order
+    return order, True
